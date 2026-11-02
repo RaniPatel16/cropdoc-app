@@ -1,0 +1,11 @@
+{
+  "name": "CropDoc",
+  "version": "1.0.0",
+  "build": "100",
+  "status": "production-ready",
+  "targetPlatforms": [
+    "ios",
+    "android"
+  ],
+  "updatedAt": "2026-11-02T11:57:27.866Z"
+}
