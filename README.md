@@ -52,3 +52,10 @@ cropdoc-app/
    ```
 
 4. Scan the QR code with **Expo Go** (Android) or the Camera app (iOS) to launch the app!
+## ✨ Features
+
+- 🌿 **Leaf Scanner**: Take photo with live camera viewfinder or choose from gallery.
+- 🔬 **Instant Diagnosis**: Detect blight, rust, leaf spots and view confidence meters.
+- 💊 **Treatment Recommendations**: Step-by-step organic remedies and chemical fungicides.
+- 🛡️ **Prevention Best Practices**: Spacing, irrigation, and crop rotation guidelines.
+- 📋 **Scan History**: Full historical log of diagnosed crops and timestamps.
