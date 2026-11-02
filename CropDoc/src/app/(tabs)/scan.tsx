@@ -110,7 +110,7 @@ export default function ScanScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.push("/(tabs)/home")}
           >
             <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
@@ -209,13 +209,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+    paddingBottom: 24,
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 25,
+    marginBottom: 20,
   },
 
   backButton: {
@@ -244,25 +245,25 @@ const styles = StyleSheet.create({
   },
 
   infoContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: "#1F2D20",
-    marginBottom: 8,
+    marginBottom: 6,
   },
 
   description: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     color: "#6B756B",
   },
 
   previewContainer: {
-    height: 300,
-    borderRadius: 24,
+    height: 250,
+    borderRadius: 22,
     borderWidth: 2,
     borderColor: "#D8E5D8",
     borderStyle: "dashed",
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    marginBottom: 20,
+    marginBottom: 16,
   },
 
   previewImage: {
@@ -280,32 +281,32 @@ const styles = StyleSheet.create({
   },
 
   previewIcon: {
-    fontSize: 55,
-    marginBottom: 10,
+    fontSize: 48,
+    marginBottom: 8,
   },
 
   previewTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
     color: "#263426",
-    marginBottom: 5,
+    marginBottom: 4,
   },
 
   previewDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#7A847A",
     textAlign: "center",
-    paddingHorizontal: 30,
+    paddingHorizontal: 24,
   },
 
   buttonsContainer: {
-    gap: 12,
+    gap: 10,
   },
 
   primaryButton: {
     backgroundColor: "#2E7D32",
-    borderRadius: 15,
-    paddingVertical: 16,
+    borderRadius: 14,
+    paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -313,14 +314,14 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
   },
 
   secondaryButton: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 15,
-    paddingVertical: 16,
+    borderRadius: 14,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: "#C9DCC9",
     flexDirection: "row",
@@ -330,46 +331,46 @@ const styles = StyleSheet.create({
 
   secondaryButtonText: {
     color: "#2E7D32",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
   },
 
   buttonIcon: {
-    fontSize: 20,
+    fontSize: 18,
     marginRight: 8,
   },
 
   analyzeButton: {
-    marginTop: 14,
+    marginTop: 12,
     backgroundColor: "#1B5E20",
-    borderRadius: 15,
-    paddingVertical: 16,
+    borderRadius: 14,
+    paddingVertical: 15,
     alignItems: "center",
   },
 
   analyzeButtonText: {
     color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "800",
   },
 
   tipContainer: {
-    marginTop: 18,
+    marginTop: 14,
     backgroundColor: "#EAF4EA",
-    borderRadius: 15,
-    padding: 15,
+    borderRadius: 14,
+    padding: 12,
   },
 
   tipTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: "#2E7D32",
-    marginBottom: 5,
+    marginBottom: 4,
   },
 
   tipText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
     color: "#5E6B5E",
   },
 

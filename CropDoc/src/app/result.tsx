@@ -132,7 +132,7 @@ export default function ResultScreen() {
         {/* Action Buttons */}
         <TouchableOpacity
           style={styles.primaryBtn}
-          onPress={() => router.push("/scan")}
+          onPress={() => router.push("/(tabs)/scan")}
           activeOpacity={0.85}
         >
           <Text style={styles.primaryBtnText}>📷 Scan Another Leaf</Text>
@@ -140,7 +140,7 @@ export default function ResultScreen() {
 
         <TouchableOpacity
           style={styles.secondaryBtn}
-          onPress={() => router.push("/history")}
+          onPress={() => router.push("/(tabs)/history")}
           activeOpacity={0.85}
         >
           <Text style={styles.secondaryBtnText}>📋 View Scan History</Text>
@@ -148,7 +148,7 @@ export default function ResultScreen() {
 
         <TouchableOpacity
           style={styles.homeBtn}
-          onPress={() => router.replace("/")}
+          onPress={() => router.replace("/(tabs)/home")}
           activeOpacity={0.85}
         >
           <Text style={styles.homeBtnText}>🏠 Back to Home</Text>

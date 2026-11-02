@@ -1,25 +1,26 @@
+import React from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 export default function RootLayout() {
   return (
     <>
-      {/* Green status bar text for the agriculture theme */}
+      {/* Status bar styling */}
       <StatusBar style="dark" />
 
-      {/* Stack navigator — each screen slides in from the right */}
+      {/* Main Stack: (tabs) containing the 4 bottom tabs + modal/stack screens */}
       <Stack
         screenOptions={{
-          headerShown: false, // We build our own headers in each screen
+          headerShown: false,
           animation: "slide_from_right",
         }}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="scan" />
-        <Stack.Screen name="result" />
-        <Stack.Screen name="history" />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="result" options={{ headerShown: false }} />
+        <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="about" options={{ headerShown: false }} />
       </Stack>
     </>
   );
 }
-
