@@ -1,25 +1,88 @@
-import React, { useState, useRef } from "react";
+
+import React, { useRef, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   Image,
+  Button,
   Alert,
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
 } from "react-native";
+
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
+
+import { analyzeLeafImage } from "../../services/imageService";
+import {
+  saveScanRecord,
+  HistoryRecord,
+} from "../../services/storageService";
+
+const crops = [
+  "Tomato",
+  "Chilli",
+  "Potato",
+  "Brinjal",
+  "Okra",
+  "Onion",
+  "Garlic",
+  "Cucumber",
+  "Wheat",
+  "Rice",
+  "Maize",
+  "Cotton",
+  "Groundnut",
+  "Soybean",
+  "Sugarcane",
+  "Mango",
+  "Banana",
+  "Grapes",
+  "Citrus",
+  "Papaya",
+  "Watermelon",
+  "Other",
+];
 
 export default function ScanScreen() {
   const router = useRouter();
   const cameraRef = useRef<any>(null);
 
   const [image, setImage] = useState<string | null>(null);
+  const [selectedCrop, setSelectedCrop] = useState("");
+  const [customCrop, setCustomCrop] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [zoom, setZoom] = useState(0);
+  const [trackWidth, setTrackWidth] = useState(0);
 
   const [permission, requestPermission] = useCameraPermissions();
+
+  const updateZoomFromTouch = (locationX: number) => {
+    if (trackWidth > 0) {
+      const ratio = Math.max(0, Math.min(1, locationX / trackWidth));
+      setZoom(+ratio.toFixed(2));
+    }
+  };
+
+  // Prepare image as JPEG
+  const prepareImage = async (uri: string) => {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [],
+      {
+        compress: 0.8,
+        format: ImageManipulator.SaveFormat.JPEG,
+      }
+    );
+
+    return result.uri;
+  };
 
   // Open camera
   const openCamera = async () => {
@@ -28,8 +91,8 @@ export default function ScanScreen() {
 
       if (!result.granted) {
         Alert.alert(
-          "Camera Permission Required",
-          "Please allow camera access to scan a crop leaf."
+          "Permission required",
+          "Please allow camera access."
         );
         return;
       }
@@ -38,410 +101,471 @@ export default function ScanScreen() {
     setShowCamera(true);
   };
 
-  // Capture photo from camera
-  const handleCapture = async () => {
-    if (cameraRef.current) {
+  // Capture photo
+  const capturePhoto = async () => {
+    try {
+      const photo = await cameraRef.current?.takePictureAsync({
+        quality: 0.8,
+      });
+
+      if (photo?.uri) {
+        const jpegUri = await prepareImage(photo.uri);
+        setImage(jpegUri);
+        setShowCamera(false);
+      }
+    } catch (error) {
+      console.error("Camera error:", error);
+      Alert.alert("Error", "Could not capture photo.");
+    }
+  };
+
+  // Select image from gallery
+  const chooseImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
       try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.85,
-        });
-        if (photo?.uri) {
-          setImage(photo.uri);
-          setShowCamera(false);
-        }
-      } catch (e) {
-        Alert.alert("Camera Error", "Could not take photo. Please try again.");
+        const jpegUri = await prepareImage(result.assets[0].uri);
+        setImage(jpegUri);
+      } catch (error) {
+        console.error("Image preparation error:", error);
+        Alert.alert("Error", "Could not prepare this image.");
       }
     }
   };
 
-  // Open gallery
-  const openGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+  // Analyze leaf image
+  const handleAnalyze = async () => {
+    if (!image) {
+      Alert.alert("Error", "Please select an image.");
+      return;
+    }
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-      setShowCamera(false);
+    // Crop selection is optional.
+    // Gemini will identify the crop from the image.
+    const crop =
+      selectedCrop === "Other"
+        ? customCrop.trim()
+        : selectedCrop.trim();
+
+    setLoading(true);
+
+    try {
+      const response = await analyzeLeafImage(image, crop);
+
+      if (!response.success || !response.result) {
+        throw new Error(
+          response.message || "Invalid response from server."
+        );
+      }
+
+      const diagnosis = response.result;
+
+      if (typeof diagnosis.isPlantLeaf !== "boolean") {
+        throw new Error("Invalid diagnosis response from server.");
+      }
+
+      const detectedCrop = diagnosis.crop || "";
+      const detectedDisease = diagnosis.disease || "";
+      const confidence = Number(diagnosis.confidence) || 0;
+
+      const symptoms = Array.isArray(diagnosis.symptoms)
+        ? diagnosis.symptoms.filter(
+            (item: unknown) => typeof item === "string"
+          )
+        : [];
+
+      const possibleCauses = Array.isArray(diagnosis.possibleCauses)
+        ? diagnosis.possibleCauses.filter(
+            (item: unknown) => typeof item === "string"
+          )
+        : [];
+
+      const diagnosisStatus =
+        diagnosis.diagnosisStatus || "uncertain";
+
+      // Save valid leaf diagnosis in scan history
+      if (
+        diagnosis.isPlantLeaf &&
+        detectedCrop &&
+        detectedDisease
+      ) {
+        const record: HistoryRecord = {
+          id: Date.now().toString(),
+          imageUri: image,
+          crop: detectedCrop,
+          disease: detectedDisease,
+          confidence,
+          date: new Date().toISOString(),
+        };
+
+        await saveScanRecord(record);
+      }
+
+      // Navigate to result screen with ALL diagnosis details
+      router.push({
+        pathname: "/result",
+        params: {
+          imageUri: image,
+          isPlantLeaf: String(diagnosis.isPlantLeaf),
+          crop: detectedCrop,
+          disease: detectedDisease,
+          confidence: String(confidence),
+          selectedCrop: crop,
+          description: diagnosis.description || "",
+          symptoms: JSON.stringify(symptoms),
+          possibleCauses: JSON.stringify(possibleCauses),
+          conditions: JSON.stringify(
+            Array.isArray(diagnosis.conditions) ? diagnosis.conditions : []
+          ),
+          prevention: JSON.stringify(
+            Array.isArray(diagnosis.prevention) ? diagnosis.prevention : []
+          ),
+          treatment: JSON.stringify(
+            Array.isArray(diagnosis.treatment) ? diagnosis.treatment : []
+          ),
+          diagnosisStatus,
+          message: diagnosis.message || "",
+        },
+      });
+    } catch (error: any) {
+      console.error("Analysis error:", error);
+
+      Alert.alert(
+        "Analysis Failed",
+        error.message || "Something went wrong."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Camera UI
+  // Camera screen
   if (showCamera) {
     return (
-      <SafeAreaView style={styles.cameraContainer}>
-        <CameraView ref={cameraRef} style={styles.camera} facing="back">
-          <View style={styles.cameraOverlay}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowCamera(false)}
-            >
-              <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
+      <View style={styles.cameraContainer}>
+        <CameraView
+          ref={cameraRef}
+          style={styles.camera}
+          facing="back"
+          zoom={zoom}
+        />
 
-            <View style={styles.cameraGuide}>
-              <Text style={styles.guideText}>
-                Place the crop leaf inside the frame
-              </Text>
-            </View>
+        <View style={styles.zoomContainer}>
+          <TouchableOpacity
+            style={styles.zoomBtn}
+            onPress={() =>
+              setZoom((prev) => Math.max(0, +(prev - 0.1).toFixed(2)))
+            }
+            activeOpacity={0.7}
+          >
+            <Text style={styles.zoomBtnText}>−</Text>
+          </TouchableOpacity>
 
-            <View style={styles.cameraBottom}>
-              <TouchableOpacity
-                style={styles.captureButton}
-                onPress={handleCapture}
-              >
-                <View style={styles.captureInner} />
-              </TouchableOpacity>
-            </View>
+          <View
+            style={styles.zoomTrack}
+            onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+            onStartShouldSetResponder={() => true}
+            onResponderGrant={(e) =>
+              updateZoomFromTouch(e.nativeEvent.locationX)
+            }
+            onResponderMove={(e) =>
+              updateZoomFromTouch(e.nativeEvent.locationX)
+            }
+          >
+            <View style={styles.zoomTrackBg} />
+            <View style={[styles.zoomFill, { width: `${zoom * 100}%` }]} />
+            <View
+              style={[
+                styles.zoomThumb,
+                { left: `${Math.min(94, Math.max(0, zoom * 100 - 3))}%` },
+              ]}
+            />
           </View>
-        </CameraView>
-      </SafeAreaView>
+
+          <TouchableOpacity
+            style={styles.zoomBtn}
+            onPress={() =>
+              setZoom((prev) => Math.min(1, +(prev + 0.1).toFixed(2)))
+            }
+            activeOpacity={0.7}
+          >
+            <Text style={styles.zoomBtnText}>+</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.zoomText}>{`${(1 + zoom * 3).toFixed(1)}x`}</Text>
+        </View>
+
+        <Button
+          title="Capture Photo"
+          onPress={capturePhoto}
+        />
+
+        <Button
+          title="Cancel"
+          onPress={() => setShowCamera(false)}
+        />
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.push("/(tabs)/home")}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>CropDoc - Scan Leaf</Text>
 
-          <Text style={styles.headerTitle}>Scan Leaf</Text>
+      <Text style={styles.description}>
+        Capture or select a crop leaf photo to identify its
+        crop and possible diseases using AI.
+      </Text>
 
-          <View style={styles.headerSpace} />
-        </View>
+      <Button
+        title="Take Photo"
+        onPress={openCamera}
+      />
 
-        {/* Information */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.title}>Analyze Your Crop</Text>
-
-          <Text style={styles.description}>
-            Take a clear photo of the affected crop leaf or choose an image
-            from your gallery.
-          </Text>
-        </View>
-
-        {/* Image Preview */}
-        <View style={styles.previewContainer}>
-          {image ? (
-            <Image source={{ uri: image }} style={styles.previewImage} />
-          ) : (
-            <>
-              <Text style={styles.previewIcon}>🌿</Text>
-
-              <Text style={styles.previewTitle}>No Leaf Image</Text>
-
-              <Text style={styles.previewDescription}>
-                Add a photo of the affected leaf to continue.
-              </Text>
-            </>
-          )}
-        </View>
-
-        {/* Buttons */}
-        <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={openCamera}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonIcon}>📷</Text>
-            <Text style={styles.primaryButtonText}>Take Photo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={openGallery}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonIcon}>🖼️</Text>
-            <Text style={styles.secondaryButtonText}>
-              Choose from Gallery
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Analyze Button */}
-        {image && (
-          <TouchableOpacity
-            style={styles.analyzeButton}
-            onPress={() =>
-              router.push({
-                pathname: "/result",
-                params: { imageUri: image },
-              })
-            }
-            activeOpacity={0.8}
-          >
-            <Text style={styles.analyzeButtonText}>🔍 Analyze Leaf</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Tip */}
-        <View style={styles.tipContainer}>
-          <Text style={styles.tipTitle}>💡 Tip for better results</Text>
-
-          <Text style={styles.tipText}>
-            Make sure the leaf is clearly visible, well-lit, and fills most of
-            the photo.
-          </Text>
-        </View>
+      <View style={styles.buttonSpacing}>
+        <Button
+          title="Choose from Gallery"
+          onPress={chooseImage}
+        />
       </View>
-    </SafeAreaView>
+
+      {image && (
+        <View>
+          <Image
+            source={{ uri: image }}
+            style={styles.preview}
+          />
+
+          <Button
+            title="Remove Image"
+            onPress={() => setImage(null)}
+          />
+        </View>
+      )}
+
+      <Text style={styles.heading}>
+        Select Crop (Optional)
+      </Text>
+
+      <Text style={styles.hint}>
+        You can select a crop as a hint, or leave it empty
+        and let AI identify the crop automatically.
+      </Text>
+
+      <View style={styles.cropContainer}>
+        {crops.map((crop) => (
+          <Text
+            key={crop}
+            onPress={() => {
+              setSelectedCrop(
+                selectedCrop === crop ? "" : crop
+              );
+            }}
+            style={[
+              styles.cropButton,
+              selectedCrop === crop && styles.selectedCrop,
+            ]}
+          >
+            {selectedCrop === crop ? "✓ " : ""}
+            {crop}
+          </Text>
+        ))}
+      </View>
+
+      {selectedCrop === "Other" && (
+        <TextInput
+          style={styles.input}
+          placeholder="Enter crop name"
+          value={customCrop}
+          onChangeText={setCustomCrop}
+        />
+      )}
+
+      <View style={styles.analyzeButton}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator
+              size="large"
+              color="green"
+            />
+            <Text style={styles.loadingText}>
+              Analyzing your crop leaf...
+            </Text>
+          </View>
+        ) : (
+          <Button
+            title="Analyze Leaf"
+            onPress={handleAnalyze}
+          />
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#F7FAF7",
-  },
-
-  content: {
-    flex: 1,
     padding: 20,
-    paddingBottom: 24,
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#E8F5E9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  backText: {
-    fontSize: 32,
-    color: "#2E7D32",
-    lineHeight: 35,
-  },
-
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#1F2D20",
-  },
-
-  headerSpace: {
-    width: 42,
-  },
-
-  infoContainer: {
-    marginBottom: 16,
+    backgroundColor: "#F5FAF5",
+    flexGrow: 1,
   },
 
   title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#1F2D20",
-    marginBottom: 6,
+    fontSize: 25,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#1B5E20",
   },
 
   description: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#6B756B",
+    fontSize: 15,
+    marginBottom: 20,
+    color: "#555",
+    lineHeight: 22,
   },
 
-  previewContainer: {
-    height: 250,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: "#D8E5D8",
-    borderStyle: "dashed",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    marginBottom: 16,
+  buttonSpacing: {
+    marginTop: 12,
   },
 
-  previewImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-
-  previewIcon: {
-    fontSize: 48,
+  heading: {
+    fontSize: 19,
+    fontWeight: "bold",
+    marginTop: 25,
     marginBottom: 8,
   },
 
-  previewTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#263426",
-    marginBottom: 4,
-  },
-
-  previewDescription: {
+  hint: {
     fontSize: 13,
-    color: "#7A847A",
-    textAlign: "center",
-    paddingHorizontal: 24,
+    color: "#666",
+    marginBottom: 14,
+    lineHeight: 19,
   },
 
-  buttonsContainer: {
+  preview: {
+    width: "100%",
+    height: 250,
+    resizeMode: "cover",
+    marginTop: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+
+  cropContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
 
-  primaryButton: {
+  cropButton: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#E8F5E9",
+    overflow: "hidden",
+  },
+
+  selectedCrop: {
     backgroundColor: "#2E7D32",
-    borderRadius: 14,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    color: "white",
   },
 
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  secondaryButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    paddingVertical: 14,
+  input: {
     borderWidth: 1,
-    borderColor: "#C9DCC9",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  secondaryButtonText: {
-    color: "#2E7D32",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  buttonIcon: {
-    fontSize: 18,
-    marginRight: 8,
+    borderColor: "#2E7D32",
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 15,
   },
 
   analyzeButton: {
-    marginTop: 12,
-    backgroundColor: "#1B5E20",
-    borderRadius: 14,
-    paddingVertical: 15,
+    marginTop: 25,
+    marginBottom: 30,
+  },
+
+  loadingContainer: {
     alignItems: "center",
+    gap: 10,
   },
 
-  analyzeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-
-  tipContainer: {
-    marginTop: 14,
-    backgroundColor: "#EAF4EA",
-    borderRadius: 14,
-    padding: 12,
-  },
-
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: "700",
+  loadingText: {
     color: "#2E7D32",
-    marginBottom: 4,
-  },
-
-  tipText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#5E6B5E",
+    fontSize: 14,
   },
 
   cameraContainer: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "black",
   },
 
   camera: {
     flex: 1,
   },
 
-  cameraOverlay: {
-    flex: 1,
-    justifyContent: "space-between",
-    padding: 20,
+  zoomContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    gap: 10,
   },
 
-  closeButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(0,0,0,0.6)",
+  zoomBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  closeText: {
+  zoomBtnText: {
     color: "#FFFFFF",
     fontSize: 20,
+    fontWeight: "bold",
+    lineHeight: 22,
   },
 
-  cameraGuide: {
-    alignSelf: "center",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-    borderRadius: 20,
-    width: "80%",
-    height: "45%",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingBottom: 15,
-  },
-
-  guideText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 8,
-    borderRadius: 8,
-  },
-
-  cameraBottom: {
-    alignItems: "center",
-    paddingBottom: 20,
-  },
-
-  captureButton: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 5,
-    borderColor: "#FFFFFF",
-    alignItems: "center",
+  zoomTrack: {
+    flex: 1,
+    height: 32,
     justifyContent: "center",
+    position: "relative",
   },
 
-  captureInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  zoomTrackBg: {
+    height: 4,
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 2,
+  },
+
+  zoomFill: {
+    height: 4,
+    backgroundColor: "#4CAF50",
+    borderRadius: 2,
+    position: "absolute",
+    left: 0,
+  },
+
+  zoomThumb: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: "#FFFFFF",
+    position: "absolute",
+    top: 9,
+  },
+
+  zoomText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    minWidth: 36,
+    textAlign: "right",
   },
 });
