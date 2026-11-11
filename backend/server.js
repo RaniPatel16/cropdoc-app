@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -12,6 +11,34 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const MONGODB_URI = process.env.MONGODB_URI;
+
+// Cached MongoDB Connection for Serverless Execution
+let cachedDbConnection = null;
+
+async function connectToDatabase() {
+  if (cachedDbConnection && mongoose.connection.readyState === 1) {
+    return cachedDbConnection;
+  }
+
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI is missing in environment variables.");
+  }
+
+  if (!cachedDbConnection) {
+    cachedDbConnection = mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 8000,
+      bufferCommands: false, // Avoid buffering queries while disconnected in serverless
+    });
+  }
+
+  try {
+    await cachedDbConnection;
+    return cachedDbConnection;
+  } catch (error) {
+    cachedDbConnection = null;
+    throw error;
+  }
+}
 
 // Gemini configuration
 const ai = process.env.GEMINI_API_KEY
@@ -145,14 +172,24 @@ async function askGemini(imageBase64, mimeType, prompt) {
 }
 
 // Backend health check
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
+  let dbStatus = "disconnected";
+
+  if (mongoose.connection.readyState === 1) {
+    dbStatus = "connected";
+  } else if (MONGODB_URI) {
+    try {
+      await connectToDatabase();
+      dbStatus = "connected";
+    } catch (e) {
+      dbStatus = "disconnected";
+    }
+  }
+
   res.json({
     success: true,
     message: "CropDoc Backend is running!",
-    mongodb:
-      mongoose.connection.readyState === 1
-        ? "connected"
-        : "disconnected",
+    mongodb: dbStatus,
   });
 });
 
@@ -173,6 +210,17 @@ app.get("/api/diseases/:crop/:disease", async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Disease name is required.",
+      });
+    }
+
+    // Connect to database on demand
+    try {
+      await connectToDatabase();
+    } catch (dbError) {
+      console.error("MongoDB on-demand connection error:", dbError.message);
+      return res.status(503).json({
+        success: false,
+        message: "Database service is temporarily unavailable.",
       });
     }
 
@@ -524,35 +572,30 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Connect MongoDB and start backend
-async function startServer() {
-  try {
-    if (!MONGODB_URI) {
-      throw new Error(
-        "MONGODB_URI is missing in backend .env file."
-      );
+// Start local HTTP server when executed directly (node server.js / npm start)
+if (require.main === module) {
+  async function startLocalServer() {
+    try {
+      console.log("Connecting to MongoDB Atlas locally...");
+      await connectToDatabase();
+      console.log("MongoDB Atlas connected successfully!");
+
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`CropDoc backend running on port ${PORT}`);
+      });
+    } catch (error) {
+      console.error("MongoDB local connection failed:", error.message);
+      // Start the server anyway so AI diagnosis routes remain reachable
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(
+          `CropDoc backend running on port ${PORT} (without persistent MongoDB)`
+        );
+      });
     }
-
-    console.log("Connecting to MongoDB Atlas...");
-
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
-
-    console.log("MongoDB Atlas connected successfully!");
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(
-        `CropDoc backend running on port ${PORT}`
-      );
-    });
-  } catch (error) {
-    console.error(
-      "MongoDB connection failed:",
-      error.message
-    );
-    process.exit(1);
   }
+
+  startLocalServer();
 }
 
-startServer();
+// Export Express app and helper for Vercel and tests
+module.exports = { app, connectToDatabase };
