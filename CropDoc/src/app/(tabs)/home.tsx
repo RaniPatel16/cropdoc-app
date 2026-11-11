@@ -319,6 +319,18 @@ export default function HomeScreen() {
                 <Text style={styles.drawerItemText}>Scan History</Text>
               </TouchableOpacity>
 
+              {/* 3b. Saved Diseases */}
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() =>
+                  closeDrawer(() => router.push("/saved-diseases"))
+                }
+                activeOpacity={0.75}
+              >
+                <Text style={styles.drawerItemIcon}>🔖</Text>
+                <Text style={styles.drawerItemText}>Saved Diseases</Text>
+              </TouchableOpacity>
+
               {/* 4. Crop Tips */}
               <TouchableOpacity
                 style={styles.drawerItem}

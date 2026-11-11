@@ -17,6 +17,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="result" options={{ headerShown: false }} />
+        <Stack.Screen name="saved-diseases" options={{ headerShown: false }} />
         <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ headerShown: false }} />

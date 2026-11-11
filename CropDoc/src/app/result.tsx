@@ -13,6 +13,12 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { isRecognizedCrop } from "../services/diagnosisService";
 import { API_CONFIG } from "../services/apiConfig";
+import {
+  isDiseaseSaved,
+  saveFavoriteDisease,
+  removeFavoriteDisease,
+  generateSavedDiseaseId,
+} from "../services/storageService";
 
 interface DiseaseInfo {
   name: string;
@@ -128,6 +134,49 @@ export default function ResultScreen() {
 
   const [diseaseError, setDiseaseError] =
     useState("");
+
+  // Favorite / Bookmark state
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Check if current disease is already bookmarked
+  useEffect(() => {
+    let active = true;
+    if (isIdentified && resolvedCrop && disease) {
+      isDiseaseSaved(resolvedCrop, disease).then((saved) => {
+        if (active) setIsSaved(saved);
+      });
+    } else {
+      setIsSaved(false);
+    }
+    return () => {
+      active = false;
+    };
+  }, [isIdentified, resolvedCrop, disease]);
+
+  const handleToggleFavorite = async () => {
+    if (!resolvedCrop || !disease) return;
+    const diseaseId = generateSavedDiseaseId(resolvedCrop, disease);
+
+    if (isSaved) {
+      await removeFavoriteDisease(diseaseId);
+      setIsSaved(false);
+    } else {
+      const symptomsList =
+        diseaseInfo?.symptoms && diseaseInfo.symptoms.length > 0
+          ? diseaseInfo.symptoms
+          : aiSymptoms;
+
+      const success = await saveFavoriteDisease({
+        id: diseaseId,
+        crop: resolvedCrop,
+        disease: disease.trim(),
+        symptoms: symptomsList,
+      });
+      if (success) {
+        setIsSaved(true);
+      }
+    }
+  };
 
   // Fetch only verified disease information
   useEffect(() => {
@@ -401,6 +450,22 @@ export default function ResultScreen() {
                     </Text>
                   </View>
                 )}
+
+              {/* Bookmark / Favorite Action for Identified Disease */}
+              {isIdentified && (
+                <TouchableOpacity
+                  style={[
+                    styles.bookmarkBtn,
+                    isSaved && styles.bookmarkBtnSaved,
+                  ]}
+                  onPress={handleToggleFavorite}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.bookmarkBtnText}>
+                    {isSaved ? "★ Saved in Favorites" : "☆ Save to Favorites"}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Healthy result */}
@@ -656,6 +721,16 @@ export default function ResultScreen() {
             >
               <Text style={styles.secondaryBtnText}>
                 📋 View Scan History
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.savedDiseasesBtn}
+              onPress={() => router.push("/saved-diseases")}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.savedDiseasesBtnText}>
+                🔖 View Saved Diseases
               </Text>
             </TouchableOpacity>
 
@@ -1107,6 +1182,44 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     color: "#2E7D32",
     fontSize: 16,
+    fontWeight: "700",
+  },
+
+  bookmarkBtn: {
+    marginTop: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.45)",
+    alignItems: "center",
+  },
+
+  bookmarkBtnSaved: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#FFFFFF",
+  },
+
+  bookmarkBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  savedDiseasesBtn: {
+    backgroundColor: "#F0F8F0",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#C8DEC8",
+    marginBottom: 10,
+  },
+
+  savedDiseasesBtnText: {
+    color: "#2E7D32",
+    fontSize: 15,
     fontWeight: "700",
   },
 

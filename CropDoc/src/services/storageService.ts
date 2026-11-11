@@ -62,3 +62,87 @@ export async function clearScanHistory(): Promise<void> {
   }
 }
 
+// ----------------------------------------------------
+// Saved / Favorite Diseases Interface & Storage
+// ----------------------------------------------------
+export interface SavedDisease {
+  id: string;
+  crop: string;
+  disease: string;
+  symptoms: string[];
+  savedAt: string;
+}
+
+const SAVED_DISEASES_KEY = "@cropdoc_saved_diseases";
+
+export function generateSavedDiseaseId(crop: string, disease: string): string {
+  return `${crop.trim().toLowerCase()}_${disease.trim().toLowerCase()}`;
+}
+
+// Get all saved favorite diseases
+export async function getSavedDiseases(): Promise<SavedDisease[]> {
+  try {
+    const jsonString = await AsyncStorage.getItem(SAVED_DISEASES_KEY);
+    if (jsonString != null) {
+      return JSON.parse(jsonString);
+    }
+  } catch (error) {
+    console.log("Error loading saved diseases:", error);
+  }
+  return [];
+}
+
+// Check if a specific disease is already saved
+export async function isDiseaseSaved(
+  crop: string,
+  disease: string
+): Promise<boolean> {
+  if (!crop || !disease) return false;
+  const targetId = generateSavedDiseaseId(crop, disease);
+  const current = await getSavedDiseases();
+  return current.some((item) => item.id === targetId);
+}
+
+// Save a disease to favorites (prevents duplicates)
+export async function saveFavoriteDisease(
+  diseaseItem: Omit<SavedDisease, "savedAt">
+): Promise<boolean> {
+  try {
+    const current = await getSavedDiseases();
+    const targetId =
+      diseaseItem.id ||
+      generateSavedDiseaseId(diseaseItem.crop, diseaseItem.disease);
+
+    // Prevent duplicate entries
+    if (current.some((item) => item.id === targetId)) {
+      return false;
+    }
+
+    const newRecord: SavedDisease = {
+      ...diseaseItem,
+      id: targetId,
+      savedAt: new Date().toISOString(),
+    };
+
+    const updated = [newRecord, ...current];
+    await AsyncStorage.setItem(SAVED_DISEASES_KEY, JSON.stringify(updated));
+    return true;
+  } catch (error) {
+    console.log("Error saving favorite disease:", error);
+    return false;
+  }
+}
+
+// Remove a disease from favorites
+export async function removeFavoriteDisease(id: string): Promise<boolean> {
+  try {
+    const current = await getSavedDiseases();
+    const updated = current.filter((item) => item.id !== id);
+    await AsyncStorage.setItem(SAVED_DISEASES_KEY, JSON.stringify(updated));
+    return true;
+  } catch (error) {
+    console.log("Error removing favorite disease:", error);
+    return false;
+  }
+}
+
