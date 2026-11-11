@@ -9,6 +9,45 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
+const DAILY_CROP_TIPS = [
+  {
+    crop: "Rice",
+    emoji: "🌾",
+    title: "Water Management (AWD)",
+    tip: "Use Alternate Wetting and Drying (AWD) to optimize irrigation water, allowing the soil to aerate periodically between watering cycles without stressing the crop.",
+  },
+  {
+    crop: "Wheat",
+    emoji: "🌾",
+    title: "Balanced Nitrogen Nutrition",
+    tip: "Avoid late over-application of nitrogen. Excess vegetative growth produces dense, humid canopies that favor rust and powdery mildew development.",
+  },
+  {
+    crop: "Cotton",
+    emoji: "🌱",
+    title: "Early Pest Scouting",
+    tip: "Inspect the undersides of leaves early in the morning for aphid and whitefly colonies, and keep field borders clean to reduce alternate host weeds.",
+  },
+  {
+    crop: "Tomato",
+    emoji: "🍅",
+    title: "Base Watering & Spacing",
+    tip: "Direct irrigation water at the soil base rather than over the foliage. Keeping leaves dry minimizes fungal spore splash and reduces early blight pressure.",
+  },
+  {
+    crop: "Potato",
+    emoji: "🥔",
+    title: "Hilling Soil Around Stems",
+    tip: "Hill soil up around potato stems as plants grow to shield developing tubers from direct sunlight and prevent greening and solanine buildup.",
+  },
+  {
+    crop: "Chilli",
+    emoji: "🌶️",
+    title: "Canopy Airflow & Pest Checks",
+    tip: "Maintain adequate plant spacing for good airflow and monitor regularly for thrips and whiteflies, which are common vectors for chilli leaf curl.",
+  },
+];
+
 const CROP_CATEGORIES = ["All", "Vegetables", "Grains", "Organic Care"];
 
 const TIPS_DATA = [
@@ -57,6 +96,13 @@ const TIPS_DATA = [
 export default function TipsScreen() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [dailyTipIndex, setDailyTipIndex] = useState(0);
+
+  const currentDailyTip = DAILY_CROP_TIPS[dailyTipIndex];
+
+  const handleNextDailyTip = () => {
+    setDailyTipIndex((prev) => (prev + 1) % DAILY_CROP_TIPS.length);
+  };
 
   const filteredTips =
     selectedCategory === "All"
@@ -75,6 +121,30 @@ export default function TipsScreen() {
             <Text style={styles.subtitle}>Farming Best Practices</Text>
             <Text style={styles.title}>🌿 Crop Tips</Text>
           </View>
+        </View>
+
+        {/* Daily Crop Care Tip Card */}
+        <View style={styles.dailyCard}>
+          <View style={styles.dailyHeader}>
+            <View style={styles.dailyBadge}>
+              <Text style={styles.dailyBadgeEmoji}>{currentDailyTip.emoji}</Text>
+              <Text style={styles.dailyBadgeText}>{currentDailyTip.crop}</Text>
+            </View>
+            <Text style={styles.dailyCounter}>
+              Tip {dailyTipIndex + 1} of {DAILY_CROP_TIPS.length}
+            </Text>
+          </View>
+
+          <Text style={styles.dailyTitle}>{currentDailyTip.title}</Text>
+          <Text style={styles.dailyText}>{currentDailyTip.tip}</Text>
+
+          <TouchableOpacity
+            style={styles.nextTipBtn}
+            onPress={handleNextDailyTip}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.nextTipBtnText}>Next Tip ➔</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Category Pills */}
@@ -157,6 +227,70 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "800",
     color: "#1F2D20",
+  },
+
+  // Daily Crop Care Tip Card
+  dailyCard: {
+    backgroundColor: "#E8F5E9",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: "#C8E6C9",
+  },
+  dailyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  dailyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#C8E6C9",
+  },
+  dailyBadgeEmoji: {
+    fontSize: 15,
+    marginRight: 6,
+  },
+  dailyBadgeText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2E7D32",
+  },
+  dailyCounter: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#5B7A5B",
+  },
+  dailyTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#1B3B1B",
+    marginBottom: 6,
+  },
+  dailyText: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: "#2E4D2E",
+    marginBottom: 14,
+  },
+  nextTipBtn: {
+    alignSelf: "flex-end",
+    backgroundColor: "#2E7D32",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  nextTipBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   // Categories
