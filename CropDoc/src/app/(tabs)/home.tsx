@@ -12,6 +12,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useLanguage } from "../../context/LanguageContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.78, 320);
@@ -29,6 +30,7 @@ const recentScan = {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Side Drawer Animation State
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -80,7 +82,7 @@ export default function HomeScreen() {
         {/* ── Header with ☰ Hamburger Menu ── */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Welcome to</Text>
+            <Text style={styles.greeting}>{t("welcome")}</Text>
             <Text style={styles.logoText}>🌱 CropDoc</Text>
           </View>
 
@@ -101,10 +103,9 @@ export default function HomeScreen() {
         {/* ── Hero Banner ── */}
         <View style={styles.heroCard}>
           <Text style={styles.heroEmoji}>🌿</Text>
-          <Text style={styles.heroTitle}>Keep Your Crops Healthy</Text>
+          <Text style={styles.heroTitle}>{t("keepCropsHealthy")}</Text>
           <Text style={styles.heroDescription}>
-            Identify crop leaf diseases quickly and get treatment
-            recommendations with just one photo.
+            {t("heroDesc")}
           </Text>
 
           <TouchableOpacity
@@ -113,7 +114,7 @@ export default function HomeScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.scanIcon}>📷</Text>
-            <Text style={styles.scanButtonText}>Scan Leaf Now</Text>
+            <Text style={styles.scanButtonText}>{t("scanLeafNow")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -125,8 +126,8 @@ export default function HomeScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.quickIcon}>🔍</Text>
-            <Text style={styles.quickTitle}>New Scan</Text>
-            <Text style={styles.quickSubtitle}>Take photo / gallery</Text>
+            <Text style={styles.quickTitle}>{t("newScan")}</Text>
+            <Text style={styles.quickSubtitle}>{t("takePhotoGallery")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -135,13 +136,13 @@ export default function HomeScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.quickIcon}>📜</Text>
-            <Text style={styles.quickTitle}>Past Scans</Text>
-            <Text style={styles.quickSubtitle}>View diagnosis log</Text>
+            <Text style={styles.quickTitle}>{t("pastScans")}</Text>
+            <Text style={styles.quickSubtitle}>{t("viewDiagnosisLog")}</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Recent Scan Section ── */}
-        <Text style={styles.sectionTitle}>Recent Scan</Text>
+        <Text style={styles.sectionTitle}>{t("recentScan")}</Text>
 
         <TouchableOpacity
           style={styles.recentCard}
@@ -166,36 +167,36 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         {/* ── Feature Cards ── */}
-        <Text style={styles.sectionTitle}>What CropDoc Can Do</Text>
+        <Text style={styles.sectionTitle}>{t("whatCropDocCanDo")}</Text>
 
         <View style={styles.featuresContainer}>
           <View style={styles.featureCard}>
             <Text style={styles.featureIcon}>🔬</Text>
-            <Text style={styles.featureTitle}>Detect Disease</Text>
+            <Text style={styles.featureTitle}>{t("detectDisease")}</Text>
             <Text style={styles.featureDescription}>
-              Identify common crop diseases from a single leaf photo.
+              {t("detectDiseaseDesc")}
             </Text>
           </View>
 
           <View style={styles.featureCard}>
             <Text style={styles.featureIcon}>💊</Text>
-            <Text style={styles.featureTitle}>Treatment Advice</Text>
+            <Text style={styles.featureTitle}>{t("treatmentAdvice")}</Text>
             <Text style={styles.featureDescription}>
-              Get organic remedies and chemical fungicide suggestions.
+              {t("treatmentAdviceDesc")}
             </Text>
           </View>
 
           <View style={styles.featureCard}>
             <Text style={styles.featureIcon}>🛡️</Text>
-            <Text style={styles.featureTitle}>Prevention Tips</Text>
+            <Text style={styles.featureTitle}>{t("preventionTips")}</Text>
             <Text style={styles.featureDescription}>
-              Learn spacing, watering, and soil care best practices.
+              {t("preventionTipsDesc")}
             </Text>
           </View>
         </View>
 
         {/* ── How It Works Section ── */}
-        <Text style={styles.sectionTitle}>How It Works</Text>
+        <Text style={styles.sectionTitle}>{t("howItWorks")}</Text>
 
         <View style={styles.stepsContainer}>
           <View style={styles.step}>
@@ -203,9 +204,9 @@ export default function HomeScreen() {
               <Text style={styles.stepBadgeText}>1</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Scan a Leaf</Text>
+              <Text style={styles.stepTitle}>{t("step1Title")}</Text>
               <Text style={styles.stepDescription}>
-                Snap a clear photo or pick one from your gallery.
+                {t("step1Desc")}
               </Text>
             </View>
           </View>
@@ -215,9 +216,9 @@ export default function HomeScreen() {
               <Text style={styles.stepBadgeText}>2</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Instant Analysis</Text>
+              <Text style={styles.stepTitle}>{t("step2Title")}</Text>
               <Text style={styles.stepDescription}>
-                CropDoc checks the leaf for disease symptoms.
+                {t("step2Desc")}
               </Text>
             </View>
           </View>
@@ -227,9 +228,9 @@ export default function HomeScreen() {
               <Text style={styles.stepBadgeText}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>View Remedies</Text>
+              <Text style={styles.stepTitle}>{t("step3Title")}</Text>
               <Text style={styles.stepDescription}>
-                Follow treatment steps to save your crop harvest.
+                {t("step3Desc")}
               </Text>
             </View>
           </View>
@@ -294,7 +295,7 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>🏠</Text>
-                <Text style={styles.drawerItemText}>Home</Text>
+                <Text style={styles.drawerItemText}>{t("drawerHome")}</Text>
               </TouchableOpacity>
 
               {/* 2. Scan Leaf */}
@@ -304,7 +305,7 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>📷</Text>
-                <Text style={styles.drawerItemText}>Scan Leaf</Text>
+                <Text style={styles.drawerItemText}>{t("drawerScan")}</Text>
               </TouchableOpacity>
 
               {/* 3. Scan History */}
@@ -316,7 +317,7 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>📋</Text>
-                <Text style={styles.drawerItemText}>Scan History</Text>
+                <Text style={styles.drawerItemText}>{t("drawerHistory")}</Text>
               </TouchableOpacity>
 
               {/* 3b. Saved Diseases */}
@@ -328,7 +329,19 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>🔖</Text>
-                <Text style={styles.drawerItemText}>Saved Diseases</Text>
+                <Text style={styles.drawerItemText}>{t("drawerSaved")}</Text>
+              </TouchableOpacity>
+
+              {/* 3c. Diagnosis Reports */}
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() =>
+                  closeDrawer(() => router.push("/reports"))
+                }
+                activeOpacity={0.75}
+              >
+                <Text style={styles.drawerItemIcon}>📄</Text>
+                <Text style={styles.drawerItemText}>{t("drawerReports")}</Text>
               </TouchableOpacity>
 
               {/* 4. Crop Tips */}
@@ -338,10 +351,20 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>🌿</Text>
-                <Text style={styles.drawerItemText}>Crop Tips</Text>
+                <Text style={styles.drawerItemText}>{t("drawerTips")}</Text>
               </TouchableOpacity>
 
               <View style={styles.drawerSectionDivider} />
+
+              {/* 4b. Language Quick Action */}
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() => closeDrawer(() => router.push("/settings"))}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.drawerItemIcon}>🌐</Text>
+                <Text style={styles.drawerItemText}>{t("drawerLanguage")}</Text>
+              </TouchableOpacity>
 
               {/* 5. How It Works */}
               <TouchableOpacity
@@ -350,7 +373,7 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>💡</Text>
-                <Text style={styles.drawerItemText}>How It Works</Text>
+                <Text style={styles.drawerItemText}>{t("drawerHowItWorks")}</Text>
               </TouchableOpacity>
 
               {/* 6. Settings */}
@@ -360,7 +383,7 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>⚙️</Text>
-                <Text style={styles.drawerItemText}>Settings</Text>
+                <Text style={styles.drawerItemText}>{t("drawerSettings")}</Text>
               </TouchableOpacity>
 
               {/* 7. About CropDoc */}
@@ -370,7 +393,7 @@ export default function HomeScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={styles.drawerItemIcon}>ℹ️</Text>
-                <Text style={styles.drawerItemText}>About CropDoc</Text>
+                <Text style={styles.drawerItemText}>{t("drawerAbout")}</Text>
               </TouchableOpacity>
             </ScrollView>
 

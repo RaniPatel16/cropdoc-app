@@ -15,6 +15,7 @@ import {
   clearScanHistory,
   HistoryRecord,
 } from "../../services/storageService";
+import { useLanguage } from "../../context/LanguageContext";
 
 // Helper function to format date string to "03 Nov 2026"
 function formatDate(dateString: string): string {
@@ -48,6 +49,7 @@ function formatDate(dateString: string): string {
 
 export default function HistoryScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // State to hold saved history scans
   const [historyList, setHistoryList] = useState<HistoryRecord[]>([]);
@@ -61,12 +63,12 @@ export default function HistoryScreen() {
   // Function to clear all history with a confirmation alert
   const handleClearHistory = () => {
     Alert.alert(
-      "Clear Scan History",
-      "Are you sure you want to delete all saved scan history? This cannot be undone.",
+      t("clearHistoryTitle"),
+      t("clearHistoryMsg"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancelBtn"), style: "cancel" },
         {
-          text: "Clear All",
+          text: t("clearAllBtn"),
           style: "destructive",
           onPress: async () => {
             await clearScanHistory();
@@ -103,13 +105,13 @@ export default function HistoryScreen() {
           >
             <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Scan History</Text>
+          <Text style={styles.headerTitle}>{t("historyTitle")}</Text>
           {historyList.length > 0 ? (
             <TouchableOpacity
               style={styles.clearHeaderButton}
               onPress={handleClearHistory}
             >
-              <Text style={styles.clearHeaderText}>Clear</Text>
+              <Text style={styles.clearHeaderText}>{t("clearBtn")}</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.headerSpace} />
@@ -119,7 +121,7 @@ export default function HistoryScreen() {
         {/* Total Scans Card */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryNumber}>{historyList.length}</Text>
-          <Text style={styles.summaryLabel}>Total Scans</Text>
+          <Text style={styles.summaryLabel}>{t("totalScans")}</Text>
         </View>
 
         {/* ---------------------------------------------------- */}
@@ -128,9 +130,9 @@ export default function HistoryScreen() {
         {historyList.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🍃</Text>
-            <Text style={styles.emptyTitle}>No scans yet</Text>
+            <Text style={styles.emptyTitle}>{t("noScansYet")}</Text>
             <Text style={styles.emptySubtitle}>
-              Your analyzed crop scans will appear here.
+              {t("noScansDesc")}
             </Text>
 
             <TouchableOpacity
@@ -138,7 +140,7 @@ export default function HistoryScreen() {
               onPress={() => router.push("/(tabs)/scan")}
               activeOpacity={0.85}
             >
-              <Text style={styles.scanBtnText}>📷 Start Your First Scan</Text>
+              <Text style={styles.scanBtnText}>{t("startFirstScanBtn")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -173,7 +175,7 @@ export default function HistoryScreen() {
                   <Text style={styles.cropName}>🌿 {item.crop}</Text>
                   <Text style={styles.diseaseName}>{item.disease}</Text>
                   <Text style={styles.confidenceText}>
-                    Confidence: {item.confidence}%
+                    {t("confidenceLabel")}: {item.confidence}%
                   </Text>
                   <Text style={styles.dateText}>{formatDate(item.date)}</Text>
                 </View>
@@ -198,7 +200,7 @@ export default function HistoryScreen() {
               onPress={() => router.push("/(tabs)/scan")}
               activeOpacity={0.85}
             >
-              <Text style={styles.scanBtnText}>📷 Start New Scan</Text>
+              <Text style={styles.scanBtnText}>{t("startNewScanBtn")}</Text>
             </TouchableOpacity>
           </View>
         )}

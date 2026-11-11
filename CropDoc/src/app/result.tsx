@@ -19,6 +19,8 @@ import {
   removeFavoriteDisease,
   generateSavedDiseaseId,
 } from "../services/storageService";
+import { generateAndSharePdfReport } from "../services/pdfReportService";
+import { useLanguage } from "../context/LanguageContext";
 
 interface DiseaseInfo {
   name: string;
@@ -39,6 +41,7 @@ interface DiseaseInfo {
 
 export default function ResultScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const {
     imageUri,
@@ -137,6 +140,48 @@ export default function ResultScreen() {
 
   // Favorite / Bookmark state
   const [isSaved, setIsSaved] = useState(false);
+
+  // PDF Export state
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    try {
+      setIsGeneratingPdf(true);
+      await generateAndSharePdfReport({
+        crop: resolvedCrop,
+        disease: isHealthy ? "Healthy Leaf" : disease || "Uncertain Diagnosis",
+        confidence: confidenceNumber,
+        isHealthy,
+        isIdentified,
+        isVerified: Boolean(diseaseInfo && diseaseInfo.verificationStatus === "verified"),
+        imageUri: imageUri || undefined,
+        description: diseaseInfo?.description || aiDescription || undefined,
+        symptoms:
+          diseaseInfo?.symptoms && diseaseInfo.symptoms.length > 0
+            ? diseaseInfo.symptoms
+            : aiSymptoms,
+        possibleCauses:
+          diseaseInfo?.causes && diseaseInfo.causes.length > 0
+            ? diseaseInfo.causes
+            : aiPossibleCauses,
+        conditions: aiConditions,
+        prevention:
+          diseaseInfo?.prevention && diseaseInfo.prevention.length > 0
+            ? diseaseInfo.prevention
+            : aiPrevention,
+        treatment:
+          diseaseInfo?.treatment && diseaseInfo.treatment.length > 0
+            ? diseaseInfo.treatment
+            : aiTreatment,
+        sources: diseaseInfo?.sources,
+        safetyNote: diseaseInfo?.safetyNote,
+      });
+    } catch (err) {
+      console.log("PDF download error:", err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   // Check if current disease is already bookmarked
   useEffect(() => {
@@ -262,7 +307,7 @@ export default function ResultScreen() {
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>
-            {isNotLeaf ? "Analysis Result" : "Diagnosis Result"}
+            {isNotLeaf ? t("analysisResultTitle") : t("diagnosisResultTitle")}
           </Text>
 
           <View style={styles.headerSpace} />
@@ -287,10 +332,10 @@ export default function ResultScreen() {
             >
               <Text style={styles.imageBadgeText}>
                 {isNotLeaf
-                  ? "⚠️ Not a Crop Leaf"
+                  ? t("notCropLeafBadge")
                   : isNonAgri
-                  ? "🌿 Non-Agricultural Plant"
-                  : "📸 Scanned Leaf"}
+                  ? t("nonAgriBadge")
+                  : t("scannedLeafBadge")}
               </Text>
             </View>
           </View>
@@ -303,7 +348,7 @@ export default function ResultScreen() {
               <Text style={styles.rejectedEmoji}>❌</Text>
 
               <Text style={styles.rejectedTitle}>
-                Unable to Analyze
+                {t("unableToAnalyze")}
               </Text>
 
               <Text style={styles.rejectedDescription}>
@@ -314,7 +359,7 @@ export default function ResultScreen() {
 
             <View style={styles.guideCard}>
               <Text style={styles.guideTitle}>
-                💡 Tips for a Successful Scan
+                {t("tipsForScan")}
               </Text>
 
               {[
@@ -336,7 +381,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.primaryBtnText}>
-                🔄 Try Again
+                {t("tryAgainBtn")}
               </Text>
             </TouchableOpacity>
 
@@ -346,7 +391,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.homeBtnText}>
-                🏠 Back to Home
+                {t("backToHomeBtn")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -356,7 +401,7 @@ export default function ResultScreen() {
               <Text style={styles.warningEmoji}>🌿</Text>
 
               <Text style={styles.warningTitle}>
-                Non-Agricultural Plant
+                {t("nonAgriPlant")}
               </Text>
 
               <Text style={styles.warningDescription}>
@@ -383,7 +428,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.primaryBtnText}>
-                🔄 Scan an Agricultural Leaf
+                {t("scanAgriLeafBtn")}
               </Text>
             </TouchableOpacity>
 
@@ -393,7 +438,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.homeBtnText}>
-                🏠 Back to Home
+                {t("backToHomeBtn")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -432,12 +477,12 @@ export default function ResultScreen() {
                   </View>
 
                   <Text style={styles.confidenceText}>
-                    {confidenceNumber}% AI confidence estimate
+                    {confidenceNumber}% {t("confidenceAiEstimate")}
                   </Text>
                 </View>
               ) : (
                 <Text style={styles.confidenceText}>
-                  AI confidence score not available
+                  {t("confidenceNotAvailable")}
                 </Text>
               )}
 
@@ -445,8 +490,7 @@ export default function ResultScreen() {
                 confidenceNumber < 60 && (
                   <View style={styles.lowConfidenceBadge}>
                     <Text style={styles.lowConfidenceText}>
-                      ⚠️ Low confidence. A clearer image and
-                      expert confirmation are recommended.
+                      {t("lowConfidenceWarning")}
                     </Text>
                   </View>
                 )}
@@ -462,7 +506,7 @@ export default function ResultScreen() {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.bookmarkBtnText}>
-                    {isSaved ? "★ Saved in Favorites" : "☆ Save to Favorites"}
+                    {isSaved ? t("savedInFavorites") : t("saveToFavorites")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -472,7 +516,7 @@ export default function ResultScreen() {
             {isHealthy && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>
-                  🌱 Plant Health Status
+                  {t("plantHealthStatus")}
                 </Text>
 
                 <Text style={styles.listText}>
@@ -482,7 +526,7 @@ export default function ResultScreen() {
 
                 {aiSymptoms.length > 0 && (
                   <InfoSection
-                    title="Visual Observations"
+                    title={t("visualObservations")}
                     icon="🌿"
                     items={aiSymptoms}
                   />
@@ -705,12 +749,32 @@ export default function ResultScreen() {
 
             {/* Navigation buttons */}
             <TouchableOpacity
+              style={styles.pdfBtn}
+              onPress={handleDownloadPdf}
+              activeOpacity={0.85}
+              disabled={isGeneratingPdf}
+            >
+              {isGeneratingPdf ? (
+                <View style={styles.btnRow}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={[styles.pdfBtnText, { marginLeft: 8 }]}>
+                    {t("generatingPdfReport")}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.pdfBtnText}>
+                  {t("downloadPdfReport")}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.primaryBtn}
               onPress={() => router.push("/(tabs)/scan")}
               activeOpacity={0.85}
             >
               <Text style={styles.primaryBtnText}>
-                📷 Scan Another Leaf
+                {t("scanAnotherLeaf")}
               </Text>
             </TouchableOpacity>
 
@@ -720,7 +784,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.secondaryBtnText}>
-                📋 View Scan History
+                {t("viewScanHistoryBtn")}
               </Text>
             </TouchableOpacity>
 
@@ -730,7 +794,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.savedDiseasesBtnText}>
-                🔖 View Saved Diseases
+                {t("viewSavedDiseasesBtn")}
               </Text>
             </TouchableOpacity>
 
@@ -740,7 +804,7 @@ export default function ResultScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.homeBtnText}>
-                🏠 Back to Home
+                {t("backToHomeBtn")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1161,6 +1225,31 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
     marginBottom: 10,
+  },
+
+  pdfBtn: {
+    backgroundColor: "#1B5E20",
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  pdfBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  btnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   primaryBtnText: {

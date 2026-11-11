@@ -14,9 +14,11 @@ import {
   removeFavoriteDisease,
   SavedDisease,
 } from "../services/storageService";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function SavedDiseasesScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [savedList, setSavedList] = useState<SavedDisease[]>([]);
 
   const loadSaved = async () => {
@@ -36,12 +38,12 @@ export default function SavedDiseasesScreen() {
 
   const handleRemove = (item: SavedDisease) => {
     Alert.alert(
-      "Remove Favorite",
-      `Remove "${item.disease}" from your saved diseases?`,
+      t("removeFavoriteTitle"),
+      `${t("removeFavoriteMsg")} "${item.disease}"`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancelBtn"), style: "cancel" },
         {
-          text: "Remove",
+          text: t("removeBtn"),
           style: "destructive",
           onPress: async () => {
             await removeFavoriteDisease(item.id);
@@ -67,23 +69,23 @@ export default function SavedDiseasesScreen() {
           >
             <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Saved Diseases</Text>
+          <Text style={styles.headerTitle}>{t("savedDiseasesTitle")}</Text>
           <View style={styles.headerSpace} />
         </View>
 
         {/* Total Count Summary Card */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryNumber}>{savedList.length}</Text>
-          <Text style={styles.summaryLabel}>Favorite Diseases Saved</Text>
+          <Text style={styles.summaryLabel}>{t("savedDiseasesCount")}</Text>
         </View>
 
         {/* Saved List or Empty State */}
         {savedList.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🔖</Text>
-            <Text style={styles.emptyTitle}>No saved diseases</Text>
+            <Text style={styles.emptyTitle}>{t("noSavedDiseases")}</Text>
             <Text style={styles.emptySubtitle}>
-              Bookmark diseases from your scan results to reference them here anytime.
+              {t("noSavedDiseasesDesc")}
             </Text>
 
             <TouchableOpacity
@@ -91,7 +93,7 @@ export default function SavedDiseasesScreen() {
               onPress={() => router.push("/(tabs)/scan")}
               activeOpacity={0.85}
             >
-              <Text style={styles.scanBtnText}>📷 Scan a Crop Leaf</Text>
+              <Text style={styles.scanBtnText}>{t("scanCropLeafBtn")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -109,7 +111,7 @@ export default function SavedDiseasesScreen() {
                     onPress={() => handleRemove(item)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.removeBtnText}>✕ Remove</Text>
+                    <Text style={styles.removeBtnText}>{t("removeBtn")}</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -119,7 +121,7 @@ export default function SavedDiseasesScreen() {
                 {/* Symptoms Preview */}
                 {item.symptoms && item.symptoms.length > 0 ? (
                   <View style={styles.symptomsBox}>
-                    <Text style={styles.symptomsTitle}>Key Symptoms:</Text>
+                    <Text style={styles.symptomsTitle}>{t("keySymptoms")}</Text>
                     {item.symptoms.slice(0, 3).map((sym, idx) => (
                       <View key={idx} style={styles.symptomRow}>
                         <Text style={styles.bullet}>•</Text>
@@ -152,7 +154,7 @@ export default function SavedDiseasesScreen() {
                   }
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.viewDetailsText}>View Disease Info ➔</Text>
+                  <Text style={styles.viewDetailsText}>{t("viewDiseaseInfo")}</Text>
                 </TouchableOpacity>
               </View>
             ))}

@@ -8,45 +8,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-
-const DAILY_CROP_TIPS = [
-  {
-    crop: "Rice",
-    emoji: "🌾",
-    title: "Water Management (AWD)",
-    tip: "Use Alternate Wetting and Drying (AWD) to optimize irrigation water, allowing the soil to aerate periodically between watering cycles without stressing the crop.",
-  },
-  {
-    crop: "Wheat",
-    emoji: "🌾",
-    title: "Balanced Nitrogen Nutrition",
-    tip: "Avoid late over-application of nitrogen. Excess vegetative growth produces dense, humid canopies that favor rust and powdery mildew development.",
-  },
-  {
-    crop: "Cotton",
-    emoji: "🌱",
-    title: "Early Pest Scouting",
-    tip: "Inspect the undersides of leaves early in the morning for aphid and whitefly colonies, and keep field borders clean to reduce alternate host weeds.",
-  },
-  {
-    crop: "Tomato",
-    emoji: "🍅",
-    title: "Base Watering & Spacing",
-    tip: "Direct irrigation water at the soil base rather than over the foliage. Keeping leaves dry minimizes fungal spore splash and reduces early blight pressure.",
-  },
-  {
-    crop: "Potato",
-    emoji: "🥔",
-    title: "Hilling Soil Around Stems",
-    tip: "Hill soil up around potato stems as plants grow to shield developing tubers from direct sunlight and prevent greening and solanine buildup.",
-  },
-  {
-    crop: "Chilli",
-    emoji: "🌶️",
-    title: "Canopy Airflow & Pest Checks",
-    tip: "Maintain adequate plant spacing for good airflow and monitor regularly for thrips and whiteflies, which are common vectors for chilli leaf curl.",
-  },
-];
+import { useLanguage } from "../../context/LanguageContext";
 
 const CROP_CATEGORIES = ["All", "Vegetables", "Grains", "Organic Care"];
 
@@ -95,8 +57,48 @@ const TIPS_DATA = [
 
 export default function TipsScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [dailyTipIndex, setDailyTipIndex] = useState(0);
+
+  const DAILY_CROP_TIPS = [
+    {
+      crop: "Rice",
+      emoji: "🌾",
+      title: t("tipRiceTitle"),
+      tip: t("tipRiceText"),
+    },
+    {
+      crop: "Wheat",
+      emoji: "🌾",
+      title: t("tipWheatTitle"),
+      tip: t("tipWheatText"),
+    },
+    {
+      crop: "Cotton",
+      emoji: "🌱",
+      title: t("tipCottonTitle"),
+      tip: t("tipCottonText"),
+    },
+    {
+      crop: "Tomato",
+      emoji: "🍅",
+      title: t("tipTomatoTitle"),
+      tip: t("tipTomatoText"),
+    },
+    {
+      crop: "Potato",
+      emoji: "🥔",
+      title: t("tipPotatoTitle"),
+      tip: t("tipPotatoText"),
+    },
+    {
+      crop: "Chilli",
+      emoji: "🌶️",
+      title: t("tipChilliTitle"),
+      tip: t("tipChilliText"),
+    },
+  ];
 
   const currentDailyTip = DAILY_CROP_TIPS[dailyTipIndex];
 
@@ -118,8 +120,8 @@ export default function TipsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.subtitle}>Farming Best Practices</Text>
-            <Text style={styles.title}>🌿 Crop Tips</Text>
+            <Text style={styles.subtitle}>{t("farmingBestPractices")}</Text>
+            <Text style={styles.title}>🌿 {t("cropTipsTitle")}</Text>
           </View>
         </View>
 
@@ -131,7 +133,7 @@ export default function TipsScreen() {
               <Text style={styles.dailyBadgeText}>{currentDailyTip.crop}</Text>
             </View>
             <Text style={styles.dailyCounter}>
-              Tip {dailyTipIndex + 1} of {DAILY_CROP_TIPS.length}
+              {t("tipIndicator")} {dailyTipIndex + 1} {t("of")} {DAILY_CROP_TIPS.length}
             </Text>
           </View>
 
@@ -143,7 +145,7 @@ export default function TipsScreen() {
             onPress={handleNextDailyTip}
             activeOpacity={0.8}
           >
-            <Text style={styles.nextTipBtnText}>Next Tip ➔</Text>
+            <Text style={styles.nextTipBtnText}>{t("nextTip")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -198,7 +200,7 @@ export default function TipsScreen() {
           onPress={() => router.push("/(tabs)/scan")}
           activeOpacity={0.85}
         >
-          <Text style={styles.scanButtonText}>📷 Scan Leaf For Diagnosis</Text>
+          <Text style={styles.scanButtonText}>📷 {t("scanForDiagnosis")}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

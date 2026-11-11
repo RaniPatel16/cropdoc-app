@@ -146,3 +146,54 @@ export async function removeFavoriteDisease(id: string): Promise<boolean> {
   }
 }
 
+// ----------------------------------------------------
+// PDF Diagnosis Reports Interface & Storage
+// ----------------------------------------------------
+export interface PdfReportRecord {
+  id: string;
+  crop: string;
+  disease: string;
+  confidence: number;
+  isHealthy: boolean;
+  date: string;
+  reportData: any;
+}
+
+const PDF_REPORTS_KEY = "@cropdoc_pdf_reports";
+
+export async function getPdfReports(): Promise<PdfReportRecord[]> {
+  try {
+    const jsonString = await AsyncStorage.getItem(PDF_REPORTS_KEY);
+    if (jsonString != null) {
+      return JSON.parse(jsonString);
+    }
+  } catch (error) {
+    console.log("Error loading PDF reports:", error);
+  }
+  return [];
+}
+
+export async function savePdfReportRecord(
+  record: PdfReportRecord
+): Promise<void> {
+  try {
+    const current = await getPdfReports();
+    // Prevent duplicate entries for the exact same crop & disease by replacing or keeping latest
+    const filtered = current.filter((item) => item.id !== record.id);
+    const updated = [record, ...filtered];
+    await AsyncStorage.setItem(PDF_REPORTS_KEY, JSON.stringify(updated));
+  } catch (error) {
+    console.log("Error saving PDF report record:", error);
+  }
+}
+
+export async function deletePdfReportRecord(id: string): Promise<void> {
+  try {
+    const current = await getPdfReports();
+    const updated = current.filter((item) => item.id !== id);
+    await AsyncStorage.setItem(PDF_REPORTS_KEY, JSON.stringify(updated));
+  } catch (error) {
+    console.log("Error deleting PDF report record:", error);
+  }
+}
+

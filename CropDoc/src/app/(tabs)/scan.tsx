@@ -23,6 +23,7 @@ import {
   saveScanRecord,
   HistoryRecord,
 } from "../../services/storageService";
+import { useLanguage } from "../../context/LanguageContext";
 
 const crops = [
   "Tomato",
@@ -51,6 +52,7 @@ const crops = [
 
 export default function ScanScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const cameraRef = useRef<any>(null);
 
   const [image, setImage] = useState<string | null>(null);
@@ -300,12 +302,12 @@ export default function ScanScreen() {
         </View>
 
         <Button
-          title="Capture Photo"
+          title={t("capturePhotoBtn")}
           onPress={capturePhoto}
         />
 
         <Button
-          title="Cancel"
+          title={t("cancelBtn")}
           onPress={() => setShowCamera(false)}
         />
       </View>
@@ -314,21 +316,20 @@ export default function ScanScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>CropDoc - Scan Leaf</Text>
+      <Text style={styles.title}>{t("scanTitle")}</Text>
 
       <Text style={styles.description}>
-        Capture or select a crop leaf photo to identify its
-        crop and possible diseases using AI.
+        {t("scanDescription")}
       </Text>
 
       <Button
-        title="Take Photo"
+        title={t("takePhotoBtn")}
         onPress={openCamera}
       />
 
       <View style={styles.buttonSpacing}>
         <Button
-          title="Choose from Gallery"
+          title={t("chooseGalleryBtn")}
           onPress={chooseImage}
         />
       </View>
@@ -341,19 +342,18 @@ export default function ScanScreen() {
           />
 
           <Button
-            title="Remove Image"
+            title={t("removeImageBtn")}
             onPress={() => setImage(null)}
           />
         </View>
       )}
 
       <Text style={styles.heading}>
-        Select Crop (Optional)
+        {t("selectCropOptional")}
       </Text>
 
       <Text style={styles.hint}>
-        You can select a crop as a hint, or leave it empty
-        and let AI identify the crop automatically.
+        {t("selectCropHint")}
       </Text>
 
       <View style={styles.cropContainer}>
@@ -379,7 +379,7 @@ export default function ScanScreen() {
       {selectedCrop === "Other" && (
         <TextInput
           style={styles.input}
-          placeholder="Enter crop name"
+          placeholder={t("enterCropName")}
           value={customCrop}
           onChangeText={setCustomCrop}
         />
@@ -393,12 +393,12 @@ export default function ScanScreen() {
               color="green"
             />
             <Text style={styles.loadingText}>
-              Analyzing your crop leaf...
+              {t("analyzingLeaf")}
             </Text>
           </View>
         ) : (
           <Button
-            title="Analyze Leaf"
+            title={t("analyzeLeafBtn")}
             onPress={handleAnalyze}
           />
         )}

@@ -1,8 +1,11 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet, Platform } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function TabLayout() {
+  const { t } = useLanguage();
+
   return (
     <Tabs
       screenOptions={{
@@ -18,7 +21,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: t("tabHome"),
           tabBarIcon: ({ focused }) => (
             <View
               style={[
@@ -36,7 +39,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="scan"
         options={{
-          title: "Scan",
+          title: t("tabScan"),
           tabBarIcon: ({ focused }) => (
             <View
               style={[
@@ -54,7 +57,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: "History",
+          title: t("tabHistory"),
           tabBarIcon: ({ focused }) => (
             <View
               style={[
@@ -72,7 +75,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tips"
         options={{
-          title: "Crop Tips",
+          title: t("tabTips"),
           tabBarIcon: ({ focused }) => (
             <View
               style={[
