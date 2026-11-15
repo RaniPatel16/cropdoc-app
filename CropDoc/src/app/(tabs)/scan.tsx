@@ -75,6 +75,11 @@ export default function ScanScreen() {
 
   // Prepare image as JPEG
   const prepareImage = async (uri: string) => {
+    // On web, uri is already a valid blob URL or data URL; ImageManipulator is unnecessary and can fail on certain browser data formats
+    if (Platform.OS === "web") {
+      return uri;
+    }
+
     const result = await ImageManipulator.manipulateAsync(
       uri,
       [],
