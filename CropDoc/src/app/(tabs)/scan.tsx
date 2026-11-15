@@ -60,6 +60,7 @@ export default function ScanScreen() {
   const [selectedCrop, setSelectedCrop] = useState("");
   const [customCrop, setCustomCrop] = useState("");
   const [loading, setLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [zoom, setZoom] = useState(0);
   const [trackWidth, setTrackWidth] = useState(0);
@@ -179,6 +180,7 @@ export default function ScanScreen() {
         : selectedCrop.trim();
 
     setLoading(true);
+    setAnalysisError(null);
 
     try {
       const response = await analyzeLeafImage(image, crop);
@@ -410,6 +412,20 @@ export default function ScanScreen() {
         />
       )}
 
+      {analysisError && (
+        <View style={styles.errorCard}>
+          <Text style={styles.errorTitle}>Notice</Text>
+          <Text style={styles.errorDescription}>{analysisError}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={handleAnalyze}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.retryButtonText}>Retry Diagnosis</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.analyzeButton}>
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -504,6 +520,44 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginTop: 15,
+  },
+
+  errorCard: {
+    backgroundColor: "#FFEBEE",
+    borderWidth: 1,
+    borderColor: "#EF9A9A",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    alignItems: "center",
+  },
+
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#C62828",
+    marginBottom: 6,
+  },
+
+  errorDescription: {
+    fontSize: 14,
+    color: "#B71C1C",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+
+  retryButton: {
+    backgroundColor: "#D32F2F",
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+  },
+
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 
   analyzeButton: {

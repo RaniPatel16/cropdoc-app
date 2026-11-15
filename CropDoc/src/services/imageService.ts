@@ -45,10 +45,24 @@ export async function analyzeLeafImage(
 
     formData.append("image", file);
 
-    const response = await fetch(`${API_CONFIG.baseURL}/api/diagnose`, {
-      method: "POST",
-      body: formData,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_CONFIG.timeoutMs || 45000);
+
+    let response: Response;
+    try {
+      response = await fetch(`${API_CONFIG.baseURL}/api/diagnose`, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        throw new Error("Diagnosis timed out. The server took too long to respond. Please try again with a clear photo.");
+      }
+      throw new Error(err.message || "Network request failed. Please check your internet connection.");
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await response.json().catch(() => ({}));
 
