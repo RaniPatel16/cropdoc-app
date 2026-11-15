@@ -1,3 +1,4 @@
+
 # CropDoc App 🌱
 
 An intelligent mobile application for crop disease detection, plant health monitoring, and treatment recommendations built with React Native and Expo.
