@@ -11,6 +11,7 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 
 import * as ImagePicker from "expo-image-picker";
@@ -88,6 +89,25 @@ export default function ScanScreen() {
 
   // Open camera
   const openCamera = async () => {
+    // On Web, use standard camera launch or image picker fallback to avoid unsupported WebRTC CameraView crashes
+    if (Platform.OS === "web") {
+      try {
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+          setImage(result.assets[0].uri);
+        }
+      } catch (err) {
+        // If web camera is unavailable/denied, fall back gracefully to file selection
+        chooseImage();
+      }
+      return;
+    }
+
+    // On Native (Android & iOS)
     if (!permission?.granted) {
       const result = await requestPermission();
 

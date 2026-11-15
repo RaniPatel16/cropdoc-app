@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
@@ -22,9 +23,18 @@ export interface ReportData {
   safetyNote?: string;
 }
 
-// Convert local file URI to base64 for embedding in the printable HTML
+// Convert image to base64 or safe web URL
 async function getBase64Image(uri?: string): Promise<string | null> {
   if (!uri) return null;
+
+  // On Web, if it's already a blob, data URL, or remote URL, use directly
+  if (Platform.OS === "web") {
+    if (uri.startsWith("data:") || uri.startsWith("blob:") || uri.startsWith("http")) {
+      return uri;
+    }
+  }
+
+  // On Native (Android & iOS), read file as base64
   try {
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
@@ -357,13 +367,7 @@ export async function generateAndSharePdfReport(data: ReportData): Promise<boole
 </html>
 `;
 
-    // 1. Generate local PDF file
-    const { uri } = await Print.printToFileAsync({
-      html: htmlContent,
-      base64: false,
-    });
-
-    // Save report record persistently
+    // Save report record persistently in storage across all platforms
     try {
       const recordId = `${data.crop.trim().toLowerCase()}_${data.disease.trim().toLowerCase()}`;
       await savePdfReportRecord({
@@ -379,7 +383,33 @@ export async function generateAndSharePdfReport(data: ReportData): Promise<boole
       console.log("Could not save PDF report record to storage:", saveErr);
     }
 
-    // 2. Open native share sheet so user can save or share
+    // Web Platform: use Print.printAsync or window.print() for desktop/mobile browsers
+    if (Platform.OS === "web") {
+      try {
+        await Print.printAsync({ html: htmlContent });
+        return true;
+      } catch (webPrintErr) {
+        // Fallback: open print window directly in browser
+        if (typeof window !== "undefined") {
+          const printWindow = window.open("", "_blank");
+          if (printWindow) {
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    // Native Platform (Android & iOS): Generate file and open native share sheet
+    const { uri } = await Print.printToFileAsync({
+      html: htmlContent,
+      base64: false,
+    });
+
     const isAvailable = await Sharing.isAvailableAsync();
     if (isAvailable) {
       await Sharing.shareAsync(uri, {
@@ -397,4 +427,3 @@ export async function generateAndSharePdfReport(data: ReportData): Promise<boole
     return false;
   }
 }
-

@@ -8,7 +8,13 @@
     "scheme": "cropdoc",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.rani1612.CropDoc",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "CropDoc requires camera access so you can capture clear photos of affected crop leaves for disease diagnosis.",
+        "NSPhotoLibraryUsageDescription": "CropDoc requires photo library access so you can select crop leaf images for disease analysis."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +24,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.rani1612.CropDoc"
+      "package": "com.rani1612.CropDoc",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "static",
